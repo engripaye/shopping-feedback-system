@@ -52,7 +52,7 @@ def submit_feedback(feedback: Feedback):
 
         # if your sheet range expects A:G update SPREADSHEET_RANGE accordingly
         res = sheets_client.append_row(SPREADSHEET_RANGE, row)
-        return {"message": "Feedback submitted", "result":res}
+        return {"message": "Feedback submitted", "result": res}
 
 
 
