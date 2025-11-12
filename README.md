@@ -203,7 +203,7 @@ This project provides an easy, cost-effective solution to collect, store, and an
 ## 🧑‍💻 Author
 
 **👤 Engr Ipaye**
-📧 [[YourEmail@example.com](mailto:b.tunde.ipaye@gmail.com)]
+📧 [(mailto:b.tunde.ipaye@gmail.com)]
 💼 [LinkedIn Profile](https://linkedin.com/in/engripayebabatunde)
 🐙 [GitHub](https://github.com/engripaye)
 
