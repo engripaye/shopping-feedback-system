@@ -33,3 +33,26 @@ app.add_middleware(
 @app.get("/")
 def root():
     return {"message": "Shopping Feedback API is running."}
+
+@app.post("/feedback")
+def submit_feedback(feedback: Feedback):
+    try:
+        #prepare row data: add timestamp optionally
+        from datetime import datetime
+        timestamp = datetime.utcnow().isoformat() + "Z"
+        row = [
+            timestamp,
+            feedback.name,
+            feedback.contact,
+            str(feedback.shopping_rating),
+            feedback.items_not_found or "",
+            feedback.price_reduction_items or "",
+            feedback.improvement_suggestions or ""
+        ]
+
+        # if your sheet range expects A:G update SPREADSHEET_RANGE accordingly
+        res = sheets_client.append_row(SPREADSHEET_RANGE, row)
+        return {"message": "Feedback submitted", "result":res}
+
+
+
