@@ -1,64 +1,49 @@
-import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Form
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from dotenv import load_dotenv
-from models import Feedback
-from services.google_sheets import GoogleSheetsClient
-from typing import Dict
+import os
 
 load_dotenv()
 
-GOOGLE_CREDENTIALS_PATH = os.getenv("GOOGLE_CREDENTIALS_PATH", "credentials.json")
-SPREADSHEET_ID = os.getenv("SPREADSHEET_ID", "")
-SPREADSHEET_RANGE = os.getenv("SPREADSHEET_RANGE", "Sheet1!A:F")
-
+SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
 if not SPREADSHEET_ID:
     raise RuntimeError("SPREADSHEET_ID environment variable is required. See .env.example for details.")
 
-# initialize sheets client
-sheets_client = GoogleSheetsClient(GOOGLE_CREDENTIALS_PATH, SPREADSHEET_ID)
+app = FastAPI()
 
-app = FastAPI(title="Shopping Feedback")
-
-# Allow local index.html to POST (or other origin you want to use)
+# Allow frontend form submission
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # for production, restrict this
-    allow_credentials=True,
+    allow_origins=["*"],  # for development
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Serve static HTML
+@app.get("/", response_class=HTMLResponse)
+async def get_index():
+    return FileResponse("index.html")
 
-@app.get("/")
-def root():
-    return {"message": "Shopping Feedback API is running."}
-
-
-@app.post("/feedback")
-def submit_feedback(feedback: Feedback):
-    try:
-        # prepare row data: add timestamp optionally
-        from datetime import datetime
-        timestamp = datetime.utcnow().isoformat() + "Z"
-        row = [
-            timestamp,
-            feedback.name,
-            feedback.contact,
-            str(feedback.shopping_rating),
-            feedback.items_not_found or "",
-            feedback.price_reduction_items or "",
-            feedback.improvement_suggestions or ""
-        ]
-
-        # if your sheet range expects A:G update SPREADSHEET_RANGE accordingly
-        res = sheets_client.append_row(SPREADSHEET_RANGE, row)
-        return {"message": "Feedback submitted", "result": res}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# Connect to Google Sheets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name(os.getenv("GOOGLE_CREDENTIALS_PATH", "credentials.json"), scope)
+client = gspread.authorize(creds)
+sheet = client.open_by_key(SPREADSHEET_ID).sheet1
 
 
-# optional endpoint to test health or return spreadsheet id
-@app.get("/health")
-def health() -> Dict[str, str]:
-    return {"status": "ok", "spreadsheet_id": SPREADSHEET_ID}
+@app.post("/submit/")
+async def submit_feedback(
+        name: str = Form(...),
+        contact: str = Form(...),
+        rating: str = Form(...),
+        missing_items: str = Form(...),
+        price_reduce: str = Form(...),
+        improvement: str = Form(...),
+):
+    # Save to Google Sheets
+    sheet.append_row([name, contact, rating, missing_items, price_reduce, improvement])
+    return {"status": "success", "message": "Feedback saved successfully!"}
