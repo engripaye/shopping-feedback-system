@@ -34,10 +34,11 @@ app.add_middleware(
 def root():
     return {"message": "Shopping Feedback API is running."}
 
+
 @app.post("/feedback")
 def submit_feedback(feedback: Feedback):
     try:
-        #prepare row data: add timestamp optionally
+        # prepare row data: add timestamp optionally
         from datetime import datetime
         timestamp = datetime.utcnow().isoformat() + "Z"
         row = [
@@ -61,5 +62,3 @@ def submit_feedback(feedback: Feedback):
 @app.get("/health")
 def health() -> Dict[str, str]:
     return {"status": "ok", "spreadsheet_id": SPREADSHEET_ID}
-
-
