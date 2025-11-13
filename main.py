@@ -53,6 +53,13 @@ def submit_feedback(feedback: Feedback):
         # if your sheet range expects A:G update SPREADSHEET_RANGE accordingly
         res = sheets_client.append_row(SPREADSHEET_RANGE, row)
         return {"message": "Feedback submitted", "result": res}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
+
+# optional endpoint to test health or return spreadsheet id
+@app.get("/health")
+def health() -> Dict[str, str]:
+    return {"status": "ok", "spreadsheet_id": SPREADSHEET_ID}
 
 
