@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Shopping Feedback Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body { font-family: Arial, sans-serif; max-width:700px; margin:2rem auto; padding:1rem; }
+        label { display:block; margin-top:12px; font-weight:600; }
+        input, textarea, select { width:100%; padding:8px; margin-top:6px; }
+        button { margin-top:12px; padding:10px 16px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+<h1>Shopping Feedback (Test)</h1>
+<form id="feedbackForm">
+    <label>Name
+        <input type="text" name="name" required />
+    </label>
+
+    <label>Contact (phone or email)
+        <input type="text" name="contact" required />
+    </label>
+
+    <label>Shopping Rating (1-5)
+        <select name="shopping_rating" required>
+            <option value="5">5 - Excellent</option>
+            <option value="4">4 - Good</option>
+            <option value="3">3 - Okay</option>
+            <option value="2">2 - Poor</option>
+            <option value="1">1 - Terrible</option>
+        </select>
+    </label>
+
+    <label>Items not found when shopping
+        <textarea name="items_not_found" rows="2"></textarea>
+    </label>
+
+    <label>Price of item you'd like to reduce
+        <textarea name="price_reduction_items" rows="2" placeholder="e.g., 'Brand X milk - too expensive'"></textarea>
+    </label>
+
+    <label>How can we improve your next shopping experience?
+        <textarea name="improvement_suggestions" rows="3"></textarea>
+    </label>
+
+    <button type="submit">Submit Feedback</button>
+</form>
+
+<div id="message"></div>
+
+<script>
+    const form = document.getElementById('feedbackForm');
+    const msg = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msg.textContent = '';
+        const data = new FormData(form);
+        const payload = {
+            name: data.get('name'),
+            contact: data.get('contact'),
+            shopping_rating: parseInt(data.get('shopping_rating')),
+            items_not_found: data.get('items_not_found'),
+            price_reduction_items: data.get('price_reduction_items'),
+            improvement_suggestions: data.get('improvement_suggestions')
+        };
+
+        try {
+            // Adjust the URL if your API runs elsewhere
+            const res = await fetch('/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (res.ok) {
+                msg.innerHTML = '<p class="success">Feedback submitted successfully 🎉</p><pre>' + JSON.stringify(json, null, 2) + '</pre>';
+                form.reset();
+            } else {
+                msg.innerHTML = '<p class="error">Error: ' + (json.detail || JSON.stringify(json)) + '</p>';
+            }
+        } catch (err) {
+            msg.innerHTML = '<p class="error">Network error: ' + err.message + '</p>';
+        }
+    });
+</script>
+</body>
+</html>
